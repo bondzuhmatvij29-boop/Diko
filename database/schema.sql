@@ -1,27 +1,25 @@
--- Таблиця користувачів
-CREATE TABLE IF NOT EXISTS users (
+-- Таблиця чатів (діалогів)
+CREATE TABLE IF NOT EXISTS chats (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username VARCHAR(50) NOT NULL UNIQUE,
-    password TEXT NOT NULL,
+    title VARCHAR(100) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Таблиця для збереження переписок (Архів / Центр збереження)
-CREATE TABLE IF NOT EXISTS messages (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    sender_id INTEGER,
-    content TEXT NOT NULL,
-    is_archived BOOLEAN DEFAULT 1,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(sender_id) REFERENCES users(id)
+-- Таблиця учасників чату
+CREATE TABLE IF NOT EXISTS chat_members (
+    chat_id INTEGER,
+    user_id INTEGER,
+    FOREIGN KEY(chat_id) REFERENCES chats(id),
+    FOREIGN KEY(user_id) REFERENCES users(id)
 );
 
--- Таблиця для спеціалізованих постів на головній сторінці
-CREATE TABLE IF NOT EXISTS posts (
+-- Таблиця повідомлень у чатах (Центр переписок)
+CREATE TABLE IF NOT EXISTS messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    author_id INTEGER,
+    chat_id INTEGER,
+    sender_id INTEGER,
     content TEXT NOT NULL,
-    category VARCHAR(50) DEFAULT 'Спеціалізований пост',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(author_id) REFERENCES users(id)
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(chat_id) REFERENCES chats(id),
+    FOREIGN KEY(sender_id) REFERENCES users(id)
 );
