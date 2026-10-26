@@ -10,7 +10,7 @@ app.config['DEBUG'] = True
 
 DATABASE_PATH = 'database/diko.db'
 
-# --- АВТОМАТИЧЕСКАЯ ИНИЦИАЛИЗАЦИЯ (СХЕМА ВНУТРИ КОДА) ---
+# --- АВТОМАТИЧЕСКАЯ ИНИЦИАЛИЗАЦИЯ И ОБНОВЛЕНИЕ БАЗЫ ДАННЫХ ---
 def init_db():
     try:
         if not os.path.exists('database'):
@@ -18,7 +18,7 @@ def init_db():
 
         conn = sqlite3.connect(DATABASE_PATH)
         
-        # Встроенная схема со всеми таблицами
+        # Встроенная схема со всеми таблицами (безопасна для существующих баз)
         schema_script = """
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -63,7 +63,7 @@ def init_db():
         conn.executescript(schema_script)
         conn.commit()
         conn.close()
-        print("✅ [УСПЕХ]: База данных и все таблицы успешно созданы!")
+        print("✅ [УСПЕХ]: База данных проверена, все таблицы на месте!")
     except Exception as e:
         print(f"❌ [ОШИБКА ИНИЦИАЛИЗАЦИИ БД]: {e}")
 
@@ -72,7 +72,7 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
-# --- ГЛОБАЛЬНЫЙ ПЕРЕХВАТЧИК ОШИБОК ---
+# --- ГЛОБАЛЬНЫЙ ПЕРЕХВАТЧИК ОШИБОК (ДИАГНОСТИКА) ---
 @app.errorhandler(Exception)
 def handle_exception(e):
     print("="*50)
@@ -87,7 +87,8 @@ def handle_exception(e):
     </div>
     """, 500
 
-# --- МАРШРУТЫ ---
+# --- МАРШРУТЫ ПРИЛОЖЕНИЯ ---
+
 @app.route('/')
 def index():
     conn = get_db_connection()
@@ -221,7 +222,7 @@ def archive_page():
     conn.close()
     return render_template('archive.html', messages=archived_messages)
 
-# --- ЗАПУСК ---
+# --- ЗАПУСК СЕРВЕРА ---
 if __name__ == '__main__':
     init_db()
     app.run(debug=True, port=5000)
