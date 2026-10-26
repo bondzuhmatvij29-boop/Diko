@@ -6,6 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 app.secret_key = 'diko_super_secret_key_change_me'
 
+# --- ФУНКЦИИ РАБОТЫ С БАЗОЙ ДАННЫХ ---
 def get_db_connection():
     conn = sqlite3.connect('database/diko.db')
     conn.row_factory = sqlite3.Row
@@ -20,6 +21,7 @@ def init_db():
     conn.commit()
     conn.close()
 
+# --- ГЛАВНАЯ СТРАНИЦА (ПОСТЫ И ЛЕНТА) ---
 @app.route('/')
 def index():
     conn = get_db_connection()
@@ -53,6 +55,7 @@ def create_post():
     
     return jsonify({'success': True, 'message': 'Пост успешно сохранен в базу данных!'})
 
+# --- АВТОРИЗАЦИЯ И РЕГИСТРАЦИЯ ---
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -106,6 +109,81 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
+# --- ЦЕНТР ПЕРЕПИСОК (ЧАТЫ) ---
+@app.route('/chats')
+def chats_page():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    user_chats = conn.execute('''
+        SELECT chats.* FROM chats
+        JOIN chat_members ON chats.id = chat_members.chat_id
+        WHERE chat_members.user_id = ?
+    ''', (session['user_id'],)).fetchall()
+    conn.close()
+    
+    return render_template('chats.html', chats=user_chats)
+
+@app.route('/chats/<int:chat_id>')
+def view_chat(chat_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+        
+    conn = get_db_connection()
+    chat = conn.execute('SELECT * FROM chats WHERE id = ?', (chat_id,)).fetchone()
+    
+    messages = conn.execute('''
+        SELECT messages.*, users.username 
+        FROM messages 
+        JOIN users ON messages.sender_id = users.id 
+        WHERE messages.chat_id = ? 
+        ORDER BY messages.timestamp ASC
+    ''', (chat_id,)).fetchall()
+    conn.close()
+    
+    return render_template('chat_room.html', chat=chat, messages=messages)
+
+@app.route('/api/chats/<int:chat_id>/send', methods=['POST'])
+def send_chat_message(chat_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Необходима авторизация'}), 401
+        
+    data = request.get_json()
+    content = data.get('content', '').strip()
+    
+    if not content:
+        return jsonify({'error': 'Сообщение не может быть пустым'}), 400
+        
+    conn = get_db_connection()
+    conn.execute(
+        'INSERT INTO messages (chat_id, sender_id, content) VALUES (?, ?, ?)',
+        (chat_id, session['user_id'], content)
+    )
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True, 'content': content, 'username': session['username']})
+
+# --- ЦЕНТР СОХРАНЕНИЯ: АРХИВ ПЕРЕПИСОК ---
+@app.route('/archive')
+def archive_page():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+        
+    conn = get_db_connection()
+    archived_messages = conn.execute('''
+        SELECT messages.*, users.username, chats.title as chat_title
+        FROM messages 
+        JOIN users ON messages.sender_id = users.id 
+        JOIN chats ON messages.chat_id = chats.id
+        ORDER BY messages.timestamp DESC
+    ''').fetchall()
+    conn.close()
+    
+    return render_template('archive.html', messages=archived_messages)
+
+# --- ЗАПУСК ПРИЛОЖЕНИЯ ---
 if __name__ == '__main__':
     init_db()
     app.run(debug=True, port=5000)
