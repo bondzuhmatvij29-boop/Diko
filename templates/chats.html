@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Центр переписок - Diko Messenger</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Diko Logo" class="logo-img">
+            <span class="logo-text">Diko</span>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('index') }}">Главная</a></li>
+                <li><a href="{{ url_for('chats_page') }}" class="active">Чаты</a></li>
+                <li><a href="{{ url_for('logout') }}" style="color: var(--accent-orange);">Выйти (@{{ session['username'] }})</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container" style="display: block; max-width: 800px;">
+        <div class="card">
+            <h2>Центр переписок и архивов</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.9rem;">Здесь хранятся все ваши сохраненные диалоги[span_1](start_span)[span_1](end_span).</p>
+
+            <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                {% for chat in chats %}
+                <a href="{{ url_for('view_chat', chat_id=chat.id) }}" style="text-decoration: none;">
+                    <div class="card" style="padding: 1rem; transition: var(--transition); background: rgba(255,255,255,0.03);">
+                        <h4 style="color: var(--text-primary); font-size: 1.1rem;">💬 {{ chat.title }}</h4>
+                        <span style="font-size: 0.8rem; color: var(--text-secondary);">Создан: {{ chat.created_at }}</span>
+                    </div>
+                </a>
+                {% else %}
+                <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">У вас пока нет активных чатов в базе данных.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
