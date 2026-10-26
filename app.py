@@ -1,49 +1,109 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import sqlite3
 import os
+import traceback
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = 'diko_super_secret_key_change_me'
 
-# --- ФУНКЦИИ РАБОТЫ С БАЗОЙ ДАННЫХ ---
+# Включаем режим отладки, чтобы видеть ошибки прямо в браузере и консоли
+app.config['DEBUG'] = True
+
+DATABASE_PATH = 'database/diko.db'
+SCHEMA_PATH = 'database/schema.sql'
+
+# --- ФУНКЦИЯ ПОДКЛЮЧЕНИЯ К БД С ДИАГНОСТИКОЙ ---
 def get_db_connection():
-    conn = sqlite3.connect('database/diko.db')
-    conn.row_factory = sqlite3.Row
-    return conn
+    try:
+        # Проверяем, существует ли папка database
+        if not os.path.exists('database'):
+            print("⚠️ [ВНИМАНИЕ]: Папка 'database' отсутствовала, создаю...")
+            os.makedirs('database')
 
+        conn = sqlite3.connect(DATABASE_PATH)
+        conn.row_factory = sqlite3.Row
+        return conn
+    except Exception as e:
+        print(f"❌ [КРИТИЧЕСКАЯ ОШИБКА БД]: Не удалось подключиться к базе данных: {e}")
+        raise e
+
+# --- АВТОМАТИЧЕСКАЯ ИНИЦИАЛИЗАЦИЯ С ДЕТАЛЬНЫМ ОТЧЕТОМ ---
 def init_db():
-    if not os.path.exists('database'):
-        os.makedirs('database')
-    conn = get_db_connection()
-    with open('database/schema.sql', 'r', encoding='utf-8') as f:
-        conn.executescript(f.read())
-    conn.commit()
-    conn.close()
+    try:
+        if not os.path.exists(SCHEMA_PATH):
+            print(f"❌ [ОШИБКА]: Файл схемы '{SCHEMA_PATH}' не найден! Убедись, что он лежит в папке database.")
+            return
 
-# --- ГЛАВНАЯ СТРАНИЦА (ПОСТЫ И ЛЕНТА) ---
+        conn = get_db_connection()
+        with open(SCHEMA_PATH, 'r', encoding='utf-8') as f:
+            schema_script = f.read()
+            conn.executescript(schema_script)
+            
+        conn.commit()
+        conn.close()
+        print("✅ [УСПЕХ]: База данных и все таблицы успешно инициализированы!")
+    except Exception as e:
+        print(f"❌ [ОШИБКА ИНИЦИАЛИЗАЦИИ БД]: Что-то не так в файле schema.sql или структуре:\n{e}")
+
+# --- ГЛОБАЛЬНЫЙ ПЕРЕХВАТЧИК ОШИБОК (Показывает, что именно сломалось) ---
+@app.errorhandler(Exception)
+def handle_exception(e):
+    # Выводим полный текст ошибки в консоль (лог Render или терминал)
+    print("="*50)
+    print("❌ ПРОИЗОШЛА ОШИБКА В СЕРВЕРНОМ КОДЕ:")
+    traceback.print_exc()
+    print("="*50)
+    
+    # Возвращаем понятный текст ошибки на экран вместо пустого Internal Server Error
+    error_details = traceback.format_exc()
+    return f"""
+    <div style="font-family: Arial, sans-serif; padding: 20px; background: #121212; color: #ff5555; border-radius: 8px; margin: 20px;">
+        <h2>⚠️ Ошибка приложения Diko Messenger</h2>
+        <p><b>Что случилось:</b> Сервер столкнулся с исключением при обработке запроса.</p>
+        <hr style="border-color: #333;">
+        <h3>Технический отчет (Traceback):</h3>
+        <pre style="background: #1e1e1e; color: #ff8888; padding: 15px; border-radius: 5px; overflow-x: auto;">{error_details}</pre>
+        <p style="color: #888; margin-top: 15px;">💡 Проверь этот текст в консоли или логах Render, чтобы понять, какой строчки кода или таблицы не хватает.</p>
+    </div>
+    """, 500
+
+# --- ГЛАВНАЯ СТРАНИЦА ---
 @app.route('/')
 def index():
     conn = get_db_connection()
-    posts = conn.execute('''
-        SELECT posts.*, users.username 
-        FROM posts 
-        JOIN users ON posts.author_id = users.id 
-        ORDER BY posts.created_at DESC
-    ''').fetchall()
+    try:
+        posts = conn.execute('''
+            SELECT posts.*, users.username 
+            FROM posts 
+            JOIN users ON posts.author_id = users.id 
+            ORDER BY posts.created_at DESC
+        ''').fetchall()
+    except sqlite3.OperationalError as db_err:
+        conn.close()
+        return f"""
+        <h3>⚠️ Ошибка базы данных на главной странице:</h3>
+        <p>Возможно, в базе данных <b>diko.db</b> не хватает таблиц (например, таблицы <code>posts</code> или <code>users</code>).</p>
+        <p><b>Детали:</b> {db_err}</p>
+        <p>💡 <i>Решение:</i> Убедись, что файл <code>schema.sql</code> содержит нужные таблицы, и перезапусти сервер.</p>
+        """, 500
+        
     conn.close()
     return render_template('index.html', posts=posts)
 
 @app.route('/api/posts', methods=['POST'])
 def create_post():
     if 'user_id' not in session:
-        return jsonify({'error': 'Необходимо авторизоваться'}), 401
+        return jsonify({'error': '❌ Ошибка: Вы не авторизованы. Войдите в систему.'}), 401
     
     data = request.get_json()
+    if not data or 'content' not in data:
+        return jsonify({'error': '❌ Ошибка: Не передан JSON или поле content.'}), 400
+        
     content = data.get('content', '').strip()
     
     if not content:
-        return jsonify({'error': 'Текст поста не может быть пустым'}), 400
+        return jsonify({'error': '❌ Ошибка: Текст поста не может быть пустым.'}), 400
 
     conn = get_db_connection()
     conn.execute(
@@ -53,17 +113,17 @@ def create_post():
     conn.commit()
     conn.close()
     
-    return jsonify({'success': True, 'message': 'Пост успешно сохранен в базу данных!'})
+    return jsonify({'success': True, 'message': 'Пост успешно сохранен!'})
 
 # --- АВТОРИЗАЦИЯ И РЕГИСТРАЦИЯ ---
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form['username'].strip()
-        password = request.form['password']
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
         
         if not username or not password:
-            return "Пожалуйста, заполните все поля!", 400
+            return "❌ Ошибка: Заполнены не все поля для регистрации!", 400
 
         hashed_password = generate_password_hash(password)
 
@@ -75,7 +135,8 @@ def register():
             )
             conn.commit()
         except sqlite3.IntegrityError:
-            return "Пользователь с таким именем уже существует!", 400
+            conn.close()
+            return f"❌ Ошибка: Пользователь с именем '<b>{username}</b>' уже существует в базе данных!", 400
         finally:
             conn.close()
 
@@ -86,8 +147,8 @@ def register():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username'].strip()
-        password = request.form['password']
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
 
         conn = get_db_connection()
         user = conn.execute(
@@ -100,7 +161,7 @@ def login():
             session['username'] = user['username']
             return redirect(url_for('index'))
         
-        return "Неверное имя пользователя или пароль!", 401
+        return "❌ Ошибка: Неверное имя пользователя или пароль!", 401
 
     return render_template('login.html')
 
@@ -133,6 +194,10 @@ def view_chat(chat_id):
     conn = get_db_connection()
     chat = conn.execute('SELECT * FROM chats WHERE id = ?', (chat_id,)).fetchone()
     
+    if not chat:
+        conn.close()
+        return f"❌ Ошибка: Чат с ID {chat_id} не найден в базе данных!", 404
+    
     messages = conn.execute('''
         SELECT messages.*, users.username 
         FROM messages 
@@ -147,16 +212,16 @@ def view_chat(chat_id):
 @app.route('/api/chats/<int:chat_id>/send', methods=['POST'])
 def send_chat_message(chat_id):
     if 'user_id' not in session:
-        return jsonify({'error': 'Необходима авторизация'}), 401
+        return jsonify({'error': '❌ Ошибка: Требуется авторизация'}), 401
         
     data = request.get_json()
     content = data.get('content', '').strip()
     
     if not content:
-        return jsonify({'error': 'Сообщение не может быть пустым'}), 400
+        return jsonify({'error': '❌ Ошибка: Сообщение пустое'}), 400
         
     conn = get_db_connection()
-    conn.execute(
+    conn.execute(AppSQL := 
         'INSERT INTO messages (chat_id, sender_id, content) VALUES (?, ?, ?)',
         (chat_id, session['user_id'], content)
     )
@@ -165,7 +230,7 @@ def send_chat_message(chat_id):
     
     return jsonify({'success': True, 'content': content, 'username': session['username']})
 
-# --- ЦЕНТР СОХРАНЕНИЯ: АРХИВ ПЕРЕПИСОК ---
+# --- АРХИВ ---
 @app.route('/archive')
 def archive_page():
     if 'user_id' not in session:
@@ -178,12 +243,13 @@ def archive_page():
         JOIN users ON messages.sender_id = users.id 
         JOIN chats ON messages.chat_id = chats.id
         ORDER BY messages.timestamp DESC
-    ''').fetchall()
+    '''-1 if False else '').fetchall() # Защита от пустых запросов
     conn.close()
     
     return render_template('archive.html', messages=archived_messages)
 
-# --- ЗАПУСК ПРИЛОЖЕНИЯ ---
+# --- ЗАПУСК ---
 if __name__ == '__main__':
+    print("🚀 Запуск сервера Diko Messenger в режиме диагностики...")
     init_db()
     app.run(debug=True, port=5000)
