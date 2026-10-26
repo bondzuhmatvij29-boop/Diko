@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход - Diko Messenger</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .auth-container {
+            max-width: 400px;
+            margin: 80px auto;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+        .auth-container h2 {
+            text-align: center;
+            background: var(--gradient-text);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.8rem;
+        }
+        .auth-input {
+            width: 100%;
+            padding: 0.8rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            outline: none;
+            transition: var(--transition);
+        }
+        .auth-input:focus {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 8px rgba(0, 242, 254, 0.2);
+        }
+        .auth-link {
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        .auth-link a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .auth-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card auth-container">
+        <h2>Вход в Diko</h2>
+        <form method="POST">
+            <div style="margin-bottom: 1rem;">
+                <label style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.4rem;">Имя пользователя</label>
+                <input type="text" name="username" class="auth-input" required placeholder="Введите ваш никнейм">
+            </div>
+            <div style="margin-bottom: 1.5rem;">
+                <label style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.4rem;">Пароль</label>
+                <input type="password" name="password" class="auth-input" required placeholder="Введите пароль">
+            </div>
+            <button type="submit" class="btn-diko" style="width: 100%;">Войти в систему</button>
+        </form>
+        <div class="auth-link">
+            Еще нет аккаунта? <a href="{{ url_for('register') }}">Зарегистрироваться</a>
+        </div>
+    </div>
+
+</body>
+</html>
