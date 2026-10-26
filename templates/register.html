@@ -3,93 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diko Messenger & Data Center</title>
-    <!-- Подключение стилей -->
+    <title>Регистрация - Diko Messenger</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .auth-container {
+            max-width: 400px;
+            margin: 80px auto;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+        .auth-container h2 {
+            text-align: center;
+            background: var(--gradient-text);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.8rem;
+        }
+        .auth-input {
+            width: 100%;
+            padding: 0.8rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            outline: none;
+            transition: var(--transition);
+        }
+        .auth-input:focus {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 8px rgba(0, 242, 254, 0.2);
+        }
+        .auth-link {
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        .auth-link a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .auth-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
 
-    <!-- Шапка сайта -->
-    <header>
-        <div class="logo-container">
-            <!-- Иконка Diko (1:1) -->
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Diko Logo" class="logo-img">
-            <span class="logo-text">Diko</span>
+    <div class="card auth-container">
+        <h2>Регистрация в Diko</h2>
+        <form method="POST">
+            <div style="margin-bottom: 1rem;">
+                <label style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.4rem;">Имя пользователя</label>
+                <input type="text" name="username" class="auth-input" required placeholder="Введите никнейм">
+            </div>
+            <div style="margin-bottom: 1.5rem;">
+                <label style="font-size: 0.85rem; color: var(--text-secondary); display: block; margin-bottom: 0.4rem;">Пароль</label>
+                <input type="password" name="password" class="auth-input" required placeholder="Создайте пароль">
+            </div>
+            <button type="submit" class="btn-diko" style="width: 100%;">Зарегистрироваться</button>
+        </form>
+        <div class="auth-link">
+            Уже есть аккаунт? <a href="{{ url_for('login') }}">Войти</a>
         </div>
-        <nav>
-            <ul>
-                <li><a href="#" class="active">Главная</a></li>
-                <li><a href="#">Чаты</a></li>
-                <li><a href="#">Архив переписок</a></li>
-                {% if session.get('username') %}
-                    <li><a href="{{ url_for('logout') }}" style="color: var(--accent-orange);">Выйти (@{{ session['username'] }})</a></li>
-                {% else %}
-                    <li><a href="{{ url_for('login') }}">Войти</a></li>
-                {% endif %}
-            </ul>
-        </nav>
-    </header>
-
-    <!-- Основной контент (3 колонки) -->
-    <div class="container">
-
-        <!-- Левая колонка: Навигация / Меню центра -->
-        <aside class="card">
-            <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">Центр управления</h3>
-            <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.5rem;">
-                <li><a href="#" style="color: var(--text-secondary); text-decoration: none; display: block; padding: 0.5rem; border-radius: var(--radius-sm);">📁 База данных</a></li>
-                <li><a href="#" style="color: var(--text-secondary); text-decoration: none; display: block; padding: 0.5rem; border-radius: var(--radius-sm);">💬 Сохраненные чаты</a></li>
-                <li><a href="#" style="color: var(--text-secondary); text-decoration: none; display: block; padding: 0.5rem; border-radius: var(--radius-sm);">📊 Статистика постов</a></li>
-            </ul>
-        </aside>
-
-        <!-- Центральная колонка: Лента постов и создание публикаций -->
-        <main class="card">
-            <div class="feed-header">
-                <h2>Главная страница публикаций</h2>
-                <p style="color: var(--text-secondary); font-size: 0.9rem;">Публикуйте специализированные посты, которые сохраняются в базу данных.</p>
-            </div>
-
-            <!-- Блок создания поста -->
-            <div class="create-post-box">
-                <textarea id="postInput" class="post-input" placeholder="Что нового в вашем дата-центре?"></textarea>
-                <button id="publishBtn" class="btn-diko">Опубликовать пост</button>
-            </div>
-
-            <!-- Лента постов (сюда скрипт добавляет карточки) -->
-            <div id="postsContainer">
-                <div class="card post-card">
-                    <div class="post-header">
-                        <span class="post-author">@nexustorvard</span>
-                        <span class="post-date">Сегодня, 12:00</span>
-                    </div>
-                    <div class="post-content">Добро пожаловать в обновленный центр цифрового сохранения Diko! Все переписки и посты надежно защищены в базе данных.</div>
-                    <span class="post-badge">Системное сообщение</span>
-                </div>
-            </div>
-        </main>
-
-        <!-- Правая колонка: Быстрый чат / Центр переписок -->
-        <aside class="card chat-window">
-            <h3 style="margin-bottom: 0.8rem; font-size: 1.1rem;">Центр переписок</h3>
-            
-            <!-- Окно сообщений -->
-            <div id="chatMessages" class="chat-messages">
-                <div class="message-bubble message-incoming">
-                    Система инициализирована. Переписки готовы к архивации.
-                </div>
-            </div>
-
-            <!-- Поле ввода сообщения -->
-            <div style="display: flex; gap: 0.5rem; margin-top: 0.8rem;">
-                <input type="text" id="chatInput" placeholder="Введите сообщение..." style="flex: 1; padding: 0.6rem; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: var(--text-primary); outline: none;">
-                <button id="sendChatBtn" class="btn-diko" style="padding: 0.6rem 1rem;">➤</button>
-            </div>
-        </aside>
-
     </div>
 
-    <!-- Подключение JavaScript -->
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>
