@@ -1,0 +1,271 @@
+/* ==========================================================================
+   Diko Messenger & Data Center - Global Stylesheet
+   ========================================================================== */
+
+/* --- Переменные и Цветовая Палитра --- */
+:root {
+    --bg-dark: #0d1117;
+    --bg-card: rgba(22, 27, 34, 0.75);
+    --bg-card-hover: rgba(33, 38, 45, 0.85);
+    --border-color: rgba(255, 255, 255, 0.1);
+    
+    /* Акцентные градиенты Diko */
+    --accent-orange: #ff7e5f;
+    --accent-green: #00f2fe;
+    --accent-blue: #4facfe;
+    --gradient-diko: linear-gradient(135deg, #ff7e5f 0%, #feb47b 35%, #00f2fe 70%, #4facfe 100%);
+    --gradient-text: linear-gradient(135deg, #ff7e5f, #00f2fe);
+
+    --text-primary: #f0f6fc;
+    --text-secondary: #8b949e;
+    --text-muted: #484f58;
+
+    --radius-main: 16px;
+    --radius-sm: 8px;
+    --transition: all 0.3s ease;
+}
+
+/* --- Базовые сбросы --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+}
+
+/* --- Шапка / Навигация (Header & Nav) --- */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: rgba(13, 17, 23, 0.8);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 242, 254, 0.3);
+}
+
+.logo-text {
+    font-size: 1.5rem;
+    font-weight: 800;
+    background: var(--gradient-text);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 0.5px;
+}
+
+nav ul {
+    display: flex;
+    list-style: none;
+    gap: 1.5rem;
+}
+
+nav a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: var(--transition);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+}
+
+nav a:hover, nav a.active {
+    color: var(--text-primary);
+    background: var(--border-color);
+}
+
+/* --- Главный Макет (Main Layout) --- */
+.container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 280px 1fr 320px;
+    gap: 1.5rem;
+}
+
+/* --- Карточки и Стеклянные Блоки --- */
+.card {
+    background: var(--bg-card);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-main);
+    padding: 1.5rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* --- Лента Постов (Main Feed) --- */
+.feed-header {
+    margin-bottom: 1.5rem;
+}
+
+.create-post-box {
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+textarea.post-input {
+    width: 100%;
+    height: 90px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    padding: 0.8rem;
+    resize: none;
+    font-size: 0.95rem;
+    outline: none;
+    transition: var(--transition);
+}
+
+textarea.post-input:focus {
+    border-color: var(--accent-green);
+    box-shadow: 0 0 8px rgba(0, 242, 254, 0.2);
+}
+
+.btn-diko {
+    background: var(--gradient-diko);
+    color: #fff;
+    border: none;
+    padding: 0.7rem 1.4rem;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    cursor: pointer;
+    align-self: flex-end;
+    transition: var(--transition);
+}
+
+.btn-diko:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 242, 254, 0.3);
+}
+
+/* --- Карточка Поста в Ленте --- */
+.post-card {
+    margin-bottom: 1.2rem;
+    transition: var(--transition);
+}
+
+.post-card:hover {
+    background: var(--bg-card-hover);
+}
+
+.post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.8rem;
+}
+
+.post-author {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.post-date {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.post-content {
+    color: #c9d1d9;
+    line-height: 1.5;
+    font-size: 0.95rem;
+}
+
+.post-badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    background: rgba(0, 242, 254, 0.1);
+    color: var(--accent-green);
+    border: 1px solid rgba(0, 242, 254, 0.2);
+    margin-top: 0.8rem;
+}
+
+/* --- Раздел ЧАТА (Messenger Component) --- */
+.chat-window {
+    display: flex;
+    flex-direction: column;
+    height: 500px;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    padding-right: 0.5rem;
+}
+
+/* Стилизация скроллбара */
+.chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+.chat-messages::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+.message-bubble {
+    max-width: 80%;
+    padding: 0.75rem 1rem;
+    border-radius: 14px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.message-incoming {
+    align-self: flex-start;
+    background: rgba(255, 255, 255, 0.07);
+    border-bottom-left-radius: 2px;
+}
+
+.message-outgoing {
+    align-self: flex-end;
+    background: linear-gradient(135deg, rgba(255, 126, 95, 0.3), rgba(0, 242, 254, 0.3));
+    border: 1px solid rgba(0, 242, 254, 0.3);
+    border-bottom-right-radius: 2px;
+}
+
+/* --- Адаптивность для мобильных устройств --- */
+@media (max-width: 900px) {
+    .container {
+        grid-template-columns: 1fr;
+    }
+    
+    header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
