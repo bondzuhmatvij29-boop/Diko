@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Diko Messenger & Data Center</title>
+    <!-- Подключение стилей -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 
-    <!-- Шапка сайта -->
+    <!-- Шапка сайта (Навигация) -->
     <header>
         <div class="logo-container">
             <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Diko Logo" class="logo-img">
@@ -16,9 +17,9 @@
         </div>
         <nav>
             <ul>
-                <li><a href="#" class="active">Главная</a></li>
-                <li><a href="#">Чаты</a></li>
-                <li><a href="#">Архив переписок</a></li>
+                <li><a href="{{ url_for('index') }}" class="active">Главная</a></li>
+                <li><a href="{{ url_for('chats_page') }}">Чаты</a></li>
+                <li><a href="{{ url_for('archive_page') }}">Архив переписок</a></li>
                 {% if session.get('username') %}
                     <li><a href="{{ url_for('logout') }}" style="color: var(--accent-orange);">Выйти (@{{ session['username'] }})</a></li>
                 {% else %}
@@ -28,48 +29,50 @@
         </nav>
     </header>
 
-    <!-- Основной контент -->
+    <!-- Основной макет (3 колонки) -->
     <div class="container">
 
-        <!-- Левая колонка -->
+        <!-- Левая колонка: Центр управления -->
         <aside class="card">
             <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">Центр управления</h3>
             <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.5rem;">
-                <li><a href="#" style="color: var(--text-secondary); text-decoration: none; display: block; padding: 0.5rem; border-radius: var(--radius-sm);">📁 База данных</a></li>
-                <li><a href="#" style="color: var(--text-secondary); text-decoration: none; display: block; padding: 0.5rem; border-radius: var(--radius-sm);">💬 Сохраненные чаты</a></li>
-                <li><a href="#" style="color: var(--text-secondary); text-decoration: none; display: block; padding: 0.5rem; border-radius: var(--radius-sm);">📊 Статистика постов</a></li>
+                <li><a href="{{ url_for('index') }}" style="color: var(--text-secondary); text-decoration: none; display: block; padding: 0.5rem; border-radius: var(--radius-sm); transition: var(--transition);">📁 База данных</a></li>
+                <li><a href="{{ url_for('chats_page') }}" style="color: var(--text-secondary); text-decoration: none; display: block; padding: 0.5rem; border-radius: var(--radius-sm); transition: var(--transition);">💬 Центр чатов</a></li>
+                <li><a href="{{ url_for('archive_page') }}" style="color: var(--text-secondary); text-decoration: none; display: block; padding: 0.5rem; border-radius: var(--radius-sm); transition: var(--transition);">📊 Архив переписок</a></li>
             </ul>
         </aside>
 
-        <!-- Центральная колонка -->
+        <!-- Центральная колонка: Лента публикаций и постов -->
         <main class="card">
             <div class="feed-header">
                 <h2>Главная страница публикаций</h2>
-                <p style="color: var(--text-secondary); font-size: 0.9rem;">Публикуйте специализированные посты, которые сохраняются в базу данных.</p>
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">Публикуйте специализированные посты, которые автоматически сохраняются в базу данных.</p>
             </div>
 
-            <!-- Форма создания поста -->
+            <!-- Блок создания поста -->
             <div class="create-post-box">
                 <textarea id="postInput" class="post-input" placeholder="Что нового в вашем дата-центре?"></textarea>
                 <button id="publishBtn" class="btn-diko">Опубликовать пост</button>
             </div>
 
-            <!-- Лента постов -->
+            <!-- Лента постов (динамическая подгрузка из БД и JS) -->
             <div id="postsContainer">
                 {% for post in posts %}
-                <div class="card post-card">
-                    <div class="post-header">
-                        <span class="post-author">@{{ post.username }}</span>
-                        <span class="post-date">{{ post.created_at }}</span>
+                <div class="card post-card" style="margin-bottom: 1.2rem;">
+                    <div class="post-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
+                        <span class="post-author" style="font-weight: 600; color: var(--text-primary);">@{{ post.username }}</span>
+                        <span class="post-date" style="font-size: 0.8rem; color: var(--text-secondary);">{{ post.created_at }}</span>
                     </div>
-                    <div class="post-content">{{ post.content }}</div>
-                    <span class="post-badge">{{ post.category }}</span>
+                    <div class="post-content" style="color: #c9d1d9; line-height: 1.5; font-size: 0.95rem;">{{ post.content }}</div>
+                    <span class="post-badge" style="display: inline-block; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; background: rgba(0, 242, 254, 0.1); color: var(--accent-green); border: 1px solid rgba(0, 242, 254, 0.2); margin-top: 0.8rem;">{{ post.category }}</span>
                 </div>
+                {% else %}
+                <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">Пока нет опубликованных постов в базе данных.</p>
                 {% endfor %}
             </div>
         </main>
 
-        <!-- Правая колонка: Чат -->
+        <!-- Правая колонка: Быстрый виджет переписок -->
         <aside class="card chat-window">
             <h3 style="margin-bottom: 0.8rem; font-size: 1.1rem;">Центр переписок</h3>
             
@@ -87,6 +90,7 @@
 
     </div>
 
+    <!-- Подключение клиентского скрипта -->
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>
