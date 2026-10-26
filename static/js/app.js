@@ -3,12 +3,11 @@
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Инициализация элементов интерфейса
     initPostSystem();
     initChatSystem();
 });
 
-/* --- 1. Система публикации постов на главной странице --- */
+/* --- 1. Система публикации постов --- */
 function initPostSystem() {
     const postInput = document.getElementById('postInput');
     const publishBtn = document.getElementById('publishBtn');
@@ -18,39 +17,41 @@ function initPostSystem() {
 
     publishBtn.addEventListener('click', async () => {
         const content = postInput.value.trim();
-        if.content === "") {
-            alert('Поле поста не може бути порожнім!');
+        if (content === "") {
+            alert('Поле поста не может быть пустым!');
             return;
         }
 
-        // Данные нового поста
-        const postData = {
-            author: "nexustorvard", // Используем никнейм разработчика/пользователя
-            content: content,
-            category: "Спеціалізований пост"
-        };
-
         try {
-            // Имитация отправки на бэкенд (Flask / Database)
-            // В реальном проекте здесь будет fetch('/api/posts', { method: 'POST', ... })
-            
-            // Добавляем пост в ленту динамически
-            appendPostToDOM(postData, postsContainer);
-            
-            // Очищаем поле ввода
-            postInput.value = '';
+            const response = await fetch('/api/posts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: content })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                appendPostToDOM({
+                    author: "nexustorvard",
+                    content: content,
+                    category: "Специализированный пост"
+                }, postsContainer);
+                postInput.value = '';
+            } else {
+                alert(result.error || 'Ошибка при сохранении поста');
+            }
         } catch (error) {
-            console.error('Помилка публікації поста:', error);
+            console.error('Ошибка публикации поста:', error);
         }
     });
 }
 
-// Функция рендеринга поста в DOM
 function appendPostToDOM(post, container) {
     const postCard = document.createElement('div');
     postCard.className = 'card post-card';
     
-    const currentDate = new Date().toLocaleDateString('uk-UA', {
+    const currentDate = new Date().toLocaleDateString('ru-RU', {
         day: 'numeric',
         month: 'short',
         hour: '2-digit',
@@ -66,12 +67,10 @@ function appendPostToDOM(post, container) {
         <span class="post-badge">${post.category}</span>
     `;
 
-    // Вставляем новый пост в самое начало ленты
     container.prepend(postCard);
 }
 
-
-/* --- 2. Система обмена сообщениями в чате (Центр переписок) --- */
+/* --- 2. Система чата и переписок --- */
 function initChatSystem() {
     const chatInput = document.getElementById('chatInput');
     const sendChatBtn = document.getElementById('sendChatBtn');
@@ -83,32 +82,23 @@ function initChatSystem() {
         const text = chatInput.value.trim();
         if (text === "") return;
 
-        // 1. Добавляем исходящее сообщение пользователя
         appendMessageToChat(text, 'outgoing', chatMessages);
         chatInput.value = '';
-
-        // Прокрутка чата вниз
         chatMessages.scrollTop = chatMessages.scrollHeight;
 
-        // 2. Имитация ответа системы / базы данных (эмуляция сохранения)
         setTimeout(() => {
-            const replyText = `[Архів бази даних]: Повідомлення успішно збережено у джерело.`;
+            const replyText = `[Архив базы данных]: Сообщение успешно сохранено в реестр.`;
             appendMessageToChat(replyText, 'incoming', chatMessages);
             chatMessages.scrollTop = chatMessages.scrollHeight;
-        }, 1000);
+        }, 800);
     };
 
     sendChatBtn.addEventListener('click', sendMessage);
-
-    // Отправка по нажатию Enter
     chatInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            sendMessage();
-        }
+        if (e.key === 'Enter') sendMessage();
     });
 }
 
-// Функция добавления сообщения в окно чата
 function appendMessageToChat(text, type, container) {
     const bubble = document.createElement('div');
     bubble.className = `message-bubble message-${type}`;
@@ -116,8 +106,6 @@ function appendMessageToChat(text, type, container) {
     container.appendChild(bubble);
 }
 
-
-/* --- Вспомогательная функция для защиты от XSS --- */
 function escapeHtml(str) {
     return str
         .replace(/&/g, "&amp;")
